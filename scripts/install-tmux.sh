@@ -17,7 +17,7 @@ REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC_DIR="$REPO_DIR/tmux"
 DEST_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux"
 TPM_DIR="$DEST_DIR/plugins/tpm"
-STAMP="$(date +%Y%m%d-%H%M%S)"
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n'  "$*" >&2; }
@@ -81,8 +81,8 @@ link_configs() {
 
   # Warn about legacy ~/.tmux.conf — it wins over XDG if both exist.
   if [ -e "$HOME/.tmux.conf" ] && [ ! -L "$HOME/.tmux.conf" ]; then
-    warn "found ~/.tmux.conf — moving to ~/.tmux.conf.bak.$STAMP so XDG config takes effect"
-    mv "$HOME/.tmux.conf" "$HOME/.tmux.conf.bak.$STAMP"
+    warn "found ~/.tmux.conf — moving to ~/.tmux.conf.bak.$TIMESTAMP so XDG config takes effect"
+    mv "$HOME/.tmux.conf" "$HOME/.tmux.conf.bak.$TIMESTAMP"
   fi
 
   local file target
@@ -93,8 +93,8 @@ link_configs() {
       continue
     fi
     if [ -e "$target" ] || [ -L "$target" ]; then
-      warn "backing up existing $target -> $target.bak.$STAMP"
-      mv "$target" "$target.bak.$STAMP"
+      warn "backing up existing $target -> $target.bak.$TIMESTAMP"
+      mv "$target" "$target.bak.$TIMESTAMP"
     fi
     log "linking $target -> $file"
     ln -s "$file" "$target"
@@ -105,18 +105,18 @@ link_configs() {
 # 5. Install plugins non-interactively.
 # -----------------------------------------------------------------------------
 install_plugins() {
-  local installer="$TPM_DIR/bin/install_plugins"
-  [ -x "$installer" ] || die "TPM installer missing at $installer"
+  local plugin_installer_script="$TPM_DIR/bin/install_plugins"
+  [ -x "$plugin_installer_script" ] || die "TPM plugin_installer_script missing at $plugin_installer_script"
 
   log "installing tmux plugins"
-  # TPM's installer needs a server it can talk to; start one if there isn't one.
+  # TPM's plugin_installer_script needs a server it can talk to; start one if there isn't one.
   if ! tmux info >/dev/null 2>&1; then
     tmux start-server
     tmux new-session -d -s __neomux_bootstrap__ >/dev/null 2>&1 || true
-    "$installer"
+    "$plugin_installer_script"
     tmux kill-session -t __neomux_bootstrap__ >/dev/null 2>&1 || true
   else
-    "$installer"
+    "$plugin_installer_script"
   fi
 }
 
